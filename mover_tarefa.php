@@ -16,11 +16,21 @@ if (!$tarefa) {
 
 $ordemAtual = $tarefa['ordem'];
 
-// Define a nova ordem
-if ($direction === 'up') {
+// Verifica a ordem mínima e máxima
+$stmt = $pdo->query("SELECT MIN(ordem) AS min_ordem, MAX(ordem) AS max_ordem FROM tarefas");
+$ordens = $stmt->fetch(PDO::FETCH_ASSOC);
+$minOrdem = $ordens['min_ordem'];
+$maxOrdem = $ordens['max_ordem'];
+
+// Define a nova ordem com base na direção, mas verifica os limites
+if ($direction === 'up' && $ordemAtual > $minOrdem) {
     $novaOrdem = $ordemAtual - 1;
-} else if ($direction === 'down') {
+} elseif ($direction === 'down' && $ordemAtual < $maxOrdem) {
     $novaOrdem = $ordemAtual + 1;
+} else {
+    // Se estiver no limite, não faz a movimentação
+    echo json_encode(['success' => false, 'message' => 'Movimento inválido']);
+    exit;
 }
 
 // Atualiza a posição da tarefa que está na nova posição temporariamente
@@ -36,4 +46,4 @@ $stmt = $pdo->prepare("UPDATE tarefas SET ordem = :ordemAtual WHERE ordem = -1")
 $stmt->execute(['ordemAtual' => $ordemAtual]);
 
 echo json_encode(['success' => $success]);
-
+?>
